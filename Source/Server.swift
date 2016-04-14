@@ -58,7 +58,7 @@ public struct Server {
 }
 
 extension Server {
-    public func start(failure: ErrorProtocol -> Void = Server.printError) throws {
+    public func start(_ failure: ErrorProtocol -> Void = Server.printError) throws {
         printHeader()
         while true {
             let stream = try server.accept(timingOut: .never)
@@ -72,7 +72,7 @@ extension Server {
         }
     }
 
-    private func processStream(stream: Stream) throws {
+    private func processStream(_ stream: Stream) throws {
         while !stream.closed {
             do {
                 let data = try stream.receive(upTo: 2048)
@@ -87,24 +87,24 @@ extension Server {
         }
     }
 
-    private func processData(data: Data, stream: Stream) throws {
+    private func processData(_ data: Data, stream: Stream) throws {
         if let request = try parser.parse(data) {
             let response = try middleware.chain(to: responder).respond(to: request)
             try serializer.serialize(response, to: stream)
 
             if let upgrade = response.upgrade {
                 try upgrade(request, stream)
-                stream.close()
+                try stream.close()
             }
 
             if !request.isKeepAlive {
-                stream.close()
+                try stream.close()
                 throw StreamError.closedStream(data: [])
             }
         }
     }
 
-    public func startInBackground(failure: ErrorProtocol -> Void = Server.printError) {
+    public func startInBackground(_ failure: ErrorProtocol -> Void = Server.printError) {
         co {
             do {
                 try self.start()
@@ -114,7 +114,7 @@ extension Server {
         }
     }
 
-    private static func printError(error: ErrorProtocol) -> Void {
+    private static func printError(_ error: ErrorProtocol) -> Void {
         print("Error: \(error)")
     }
 

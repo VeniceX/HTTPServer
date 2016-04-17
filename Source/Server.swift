@@ -26,7 +26,7 @@
 @_exported import HTTPParser
 @_exported import HTTPSerializer
 
-public struct Server {
+public struct Server: S4.Server {
     public let server: C7.Host
     public let parser: S4.RequestParser
     public let middleware: [S4.Middleware]
@@ -35,6 +35,12 @@ public struct Server {
     public let port: Int
     public let bufferSize: Int = 2048
 
+    // S4.Server conformance
+    public init(host: String, port: Int, responder: Responder) throws {
+        try self.init(host: host, port: port, reusePort: false, responder: responder)
+    }
+
+    // Own initializers
     public init(host: String = "0.0.0.0", port: Int = 8080, reusePort: Bool = false, parser: S4.RequestParser = RequestParser(), middleware: Middleware..., responder: Responder, serializer: S4.ResponseSerializer = ResponseSerializer()) throws {
         self.server = try TCPServer(host: host, port: port, reusePort: reusePort)
         self.parser = parser
@@ -59,6 +65,13 @@ public struct Server {
 }
 
 extension Server {
+
+    // S4.Server conformance
+    public func start() throws {
+        try self.start(Server.printError)
+    }
+
+    // Own methods
     public func start(_ failure: ErrorProtocol -> Void = Server.printError) throws {
         printHeader()
         while true {

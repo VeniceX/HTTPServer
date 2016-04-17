@@ -33,9 +33,10 @@ public struct Server {
     public let responder: S4.Responder
     public let serializer: S4.ResponseSerializer
     public let port: Int
+    public let bufferSize: Int = 2048
 
-    public init(at host: String = "0.0.0.0", on port: Int = 8080, reusingPort reusePort: Bool = false, parser: S4.RequestParser = RequestParser(), middleware: Middleware..., responder: Responder, serializer: S4.ResponseSerializer = ResponseSerializer()) throws {
-        self.server = try TCPServer(at: host, on: port, reusingPort: reusePort)
+    public init(host: String = "0.0.0.0", port: Int = 8080, reusePort: Bool = false, parser: S4.RequestParser = RequestParser(), middleware: Middleware..., responder: Responder, serializer: S4.ResponseSerializer = ResponseSerializer()) throws {
+        self.server = try TCPServer(host: host, port: port, reusePort: reusePort)
         self.parser = parser
         self.middleware = middleware
         self.responder = responder
@@ -47,8 +48,8 @@ public struct Server {
         try self.init(responder: responder)
     }
 
-    public init(at host: String = "0.0.0.0", on port: Int = 8080, reusingPort reusePort: Bool = false, parser: S4.RequestParser = RequestParser(), middleware: Middleware..., serializer: S4.ResponseSerializer = ResponseSerializer(), _ respond: Respond) throws {
-        self.server = try TCPServer(at: host, on: port, reusingPort: reusePort)
+    public init(host: String = "0.0.0.0", port: Int = 8080, reusePort: Bool = false, parser: S4.RequestParser = RequestParser(), middleware: Middleware..., serializer: S4.ResponseSerializer = ResponseSerializer(), _ respond: Respond) throws {
+        self.server = try TCPServer(host: host, port: port, reusePort: reusePort)
         self.parser = parser
         self.middleware = middleware
         self.responder = BasicResponder(respond)
@@ -75,10 +76,8 @@ extension Server {
     private func processStream(_ stream: Stream) throws {
         while !stream.closed {
             do {
-                let data = try stream.receive(upTo: 2048)
+                let data = try stream.receive(upTo: bufferSize)
                 try processData(data, stream: stream)
-            } catch StreamError.closedStream {
-                break
             } catch {
                 let response = Response(status: .internalServerError)
                 try serializer.serialize(response, to: stream)
@@ -99,7 +98,6 @@ extension Server {
 
             if !request.isKeepAlive {
                 try stream.close()
-                throw StreamError.closedStream(data: [])
             }
         }
     }

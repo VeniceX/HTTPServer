@@ -26,7 +26,7 @@
 @_exported import HTTPParser
 @_exported import HTTPSerializer
 
-public struct Server: S4.Server {
+public struct Server {
     public let server: C7.Host
     public let parser: S4.RequestParser
     public let middleware: [S4.Middleware]

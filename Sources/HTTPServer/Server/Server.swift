@@ -113,6 +113,7 @@ extension Server {
                 try serializer.serialize(response, deadline: .never)
 
                 if let error = unrecoveredError {
+                    stream.close()
                     throw error
                 }
             }
@@ -128,7 +129,7 @@ extension Server {
     }
 
     public static func log(error: Error) -> Void {
-        print("Error: \(error)")
+        print("Zewo/HTTPServer Error: \(error)")
     }
 
     public func printHeader() {
